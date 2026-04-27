@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emergency System</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#f2f2f2;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+}
+
+.card{
+    width:350px;
+    height:500px;
+    background:white;
+    border-radius:20px;
+    padding:20px;
+    position:relative;
+    box-shadow:0 0 15px rgba(0,0,0,0.2);
+}
+
+/* Pages */
+.page{display:none;}
+.active{display:block;}
+
+/* Address box */
+textarea{
+    width:100%;
+    height:150px;
+    border-radius:10px;
+    padding:10px;
+    font-size:16px;
+}
+
+/* Next arrow */
+.next{
+    position:absolute;
+    bottom:15px;
+    right:15px;
+    width:55px;
+    height:55px;
+    border-radius:50%;
+    background:#007bff;
+    color:white;
+    border:none;
+    font-size:22px;
+}
+
+/* Emergency button */
+.emergency{
+    width:170px;
+    height:170px;
+    border-radius:50%;
+    background:red;
+    color:white;
+    font-size:60px;
+    border:none;
+    margin:90px auto 10px;
+    display:block;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.emergency:active {
+    transform: scale(0.9);
+}
+
+.label{
+    text-align:center;
+    color:red;
+    font-weight:bold;
+    font-size:18px;
+}
+
+/* Back button */
+.back{
+    position:absolute;
+    top:10px;
+    left:10px;
+    font-size:22px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+<div class="back" onclick="goBack()">←</div>
+
+<div id="page1" class="page active">
+    <h3>Enter Address</h3>
+    <textarea id="addr" placeholder="Enter your address..."></textarea>
+    <button class="next" onclick="goToEmergency()">➜</button>
+</div>
+
+<div id="page2" class="page">
+    <button class="emergency" id="sosBtn" onclick="sendEmergency()">🆘</button>
+    <div class="label">EMERGENCY</div>
+</div>
+
+</div>
+
+<script>
+let userAddress = "";
+
+/* PAGE NAVIGATION */
+function goToEmergency(){
+    const addr = document.getElementById("addr").value;
+    if(addr.trim() === ""){
+        alert("Please enter address");
+        return;
+    }
+    userAddress = addr;
+    document.getElementById("page1").classList.remove("active");
+    document.getElementById("page2").classList.add("active");
+}
+
+/* EMERGENCY SEND - Updated for Backend API Support */
+async function sendEmergency(){
+    const btn = document.getElementById("sosBtn");
+    
+    // UI Loading state
+    btn.disabled = true;
+    btn.style.background = "#550000"; 
+    btn.innerHTML = "⌛";
+
+    try {
+        // Backend /api/send-emergency endpoint ni call chesthunnam
+        const response = await fetch('/api/send-emergency', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                location: userAddress 
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert("✅ Emergency alert sent to ambulance!");
+        } else {
+            alert("❌ Failed to send alert: " + data.message);
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("⚠️ Connection Error! Server run avthundha ledha check cheyandi.");
+    } finally {
+        // Button reset
+        btn.disabled = false;
+        btn.style.background = "red";
+        btn.innerHTML = "🆘";
+    }
+}
+
+/* BACK BUTTON */
+function goBack(){
+    if(document.getElementById("page2").classList.contains("active")){
+        document.getElementById("page2").classList.remove("active");
+        document.getElementById("page1").classList.add("active");
+    }
+    else{
+        window.location.href = "server"; // server.html ki redirect
+    }
+}
+</script>
+
+</body>
+</html>

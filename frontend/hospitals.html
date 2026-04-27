@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health App</title>
+
+<style>
+body { font-family: Arial; margin: 0; background: #f0fdf4; }
+
+header {
+    background: #0f766e;
+    color: white;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.back {
+    font-size: 22px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.container { padding: 20px; }
+
+.card {
+    background: white;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+button {
+    padding: 10px;
+    margin: 5px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.call { background: #22c55e; color: white; }
+.msg { background: #25D366; color: white; }
+.video { background: #f59e0b; color: white; }
+
+textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+}
+
+.hidden { display: none; }
+
+canvas {
+    margin-top: 15px;
+    border: 2px solid #065f46;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.prescription-note{
+    margin-top:10px;
+    padding:10px;
+    background:#ecfdf5;
+    border-left:5px solid #22c55e;
+    border-radius:6px;
+    display:none;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <span id="backBtn" class="back hidden" onclick="goBack()">⬅</span>
+    <span id="title">Nearby Villages</span>
+</header>
+
+<div class="container" id="homePage">
+    <div class="card" onclick="openVillage('Penuguduru')">Penuguduru</div>
+    <div class="card" onclick="openVillage('Turangi')">Turangi</div>
+    <div class="card" onclick="openVillage('Karapa')">Karapa</div>
+</div>
+
+<div class="container hidden" id="detailsPage">
+
+    <h2 id="villageName"></h2>
+
+    <p><b>Hospital:</b> <span id="hospital"></span></p>
+    <p><b>Doctor:</b> <span id="doctor"></span></p>
+    <p><b>Qualification:</b> <span id="qualification"></span></p>
+    <p><b>Specialization:</b> <span id="specialization"></span></p>
+    <p><b>Address:</b> <span id="address"></span></p>
+
+    <h3>Select Problem then you get prescription</h3>
+    <select id="problem" onchange="generatePrescription()">
+        <option value="">--Select--</option>
+    </select>
+
+    <canvas id="prescriptionCanvas" width="600" height="400"></canvas>
+
+    <div id="note" class="prescription-note">
+        If you want to book tablets, upload the above prescription in the tablet box and place your order.
+    </div>
+
+    <h3>Message Doctor</h3>
+    <textarea id="messageBox" placeholder="Type your message..."></textarea>
+    <button class="msg" onclick="sendMessage()">📩 Send Message</button>
+
+    <h3>Contact Doctor</h3>
+    <button class="call" onclick="makeCall()">📞 Call</button>
+    <button class="msg" onclick="sendPrescription()">📤 Send Prescription</button>
+    <button class="video" onclick="videoCall()">🎥 Video</button>
+
+</div>
+
+<script>
+
+let currentVillage = "";
+let prescriptionText = "";
+
+const homePage = document.getElementById("homePage");
+const detailsPage = document.getElementById("detailsPage");
+const backBtn = document.getElementById("backBtn");
+const title = document.getElementById("title");
+
+const data = {
+    Penuguduru: {
+        hospital: "Sri Sai Clinic",
+        doctor: "Dr. Ramesh",
+        qualification: "MBBS",
+        specialization: "Fever, BP",
+        address: "Main Road",
+        doctorNumber: "7569194766",
+        pharmacyNumber: "6303317734",
+        problems: ["fever","bp"]
+    },
+    Turangi: {
+        hospital: "Mother Care",
+        doctor: "Dr. Suresh",
+        qualification: "MBBS",
+        specialization: "Women Health",
+        address: "Bus Stop Area",
+        doctorNumber: "7569194766",
+        pharmacyNumber: "6303317734",
+        problems: ["pregnancy","periods"]
+    },
+    Karapa: {
+        hospital: "Child Care Clinic",
+        doctor: "Dr. Prasad",
+        qualification: "MBBS, MD",
+        specialization: "General Medicine",
+        address: "Market Area",
+        doctorNumber: "7569194766",
+        pharmacyNumber: "6303317734",
+        problems: ["fever","cold","diabetes"]
+    }
+};
+
+function openVillage(name) {
+    currentVillage = name;
+
+    homePage.classList.add("hidden");
+    detailsPage.classList.remove("hidden");
+    backBtn.classList.remove("hidden");
+
+    title.innerText = name;
+
+    let d = data[name];
+
+    villageName.innerText = name;
+    hospital.innerText = d.hospital;
+    doctor.innerText = d.doctor;
+    qualification.innerText = d.qualification;
+    specialization.innerText = d.specialization;
+    address.innerText = d.address;
+
+    document.getElementById("note").style.display = "none";
+
+    let select = document.getElementById("problem");
+    select.innerHTML = `<option value="">--Select--</option>`;
+    d.problems.forEach(p=>{
+        select.innerHTML += `<option value="${p}">${p}</option>`;
+    });
+}
+
+function goBack(){
+    homePage.classList.remove("hidden");
+    detailsPage.classList.add("hidden");
+    backBtn.classList.add("hidden");
+    title.innerText = "Nearby Villages";
+}
+
+function generatePrescription(){
+    let problem = document.getElementById("problem").value;
+    if(!problem) return;
+
+    let canvas = document.getElementById("prescriptionCanvas");
+    let ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0,0,600,400);
+
+    let d = data[currentVillage];
+
+    let tablet = problem + " Tablet";
+    let dosage = "1 time daily";
+    let rate = "₹100";
+
+    ctx.font = "bold 22px Arial";
+    ctx.fillText(d.hospital.toUpperCase(), 150, 30);
+
+    ctx.font = "14px Arial";
+    ctx.fillText("Doctor: " + d.doctor, 20, 70);
+    ctx.fillText("Date: " + new Date().toLocaleDateString(), 450, 70);
+
+    ctx.fillText("Patient: Chinnu", 20, 100);
+    ctx.fillText("Age/Sex: 6Y/M", 20, 120);
+    ctx.fillText("Problem: " + problem, 20, 140);
+
+    ctx.strokeRect(20,160,560,30);
+    ctx.fillText("S.No",30,180);
+    ctx.fillText("Medicine",120,180);
+    ctx.fillText("Qty",300,180);
+    ctx.fillText("Rate",380,180);
+    ctx.fillText("Amount",460,180);
+
+    ctx.strokeRect(20,190,560,40);
+    ctx.fillText("1",30,215);
+    ctx.fillText(tablet,120,215);
+    ctx.fillText("1",300,215);
+    ctx.fillText("100",380,215);
+    ctx.fillText("100",460,215);
+
+    ctx.fillText("Total: ₹100", 400, 260);
+
+    ctx.font = "italic 18px cursive";
+    ctx.fillText("Dr. Signature", 450, 320);
+
+    // ✅ UPDATED MESSAGE CONTENT
+    prescriptionText = 
+`Prescription Details:
+
+Hospital: ${d.hospital}
+Doctor: ${d.doctor}
+
+Problem: ${problem}
+Tablet: ${tablet}
+Dosage: ${dosage}
+Rate: ${rate}
+
+Total: ₹100`;
+
+    document.getElementById("note").style.display = "block";
+}
+
+function sendMessage(){
+    let msg = document.getElementById("messageBox").value;
+    if(!msg){ alert("Enter message"); return; }
+
+    window.location.href = `https://wa.me/91${data[currentVillage].doctorNumber}?text=${encodeURIComponent(msg)}`;
+}
+
+function sendPrescription(){
+    if(!prescriptionText){ alert("Select problem first!"); return; }
+
+    window.location.href = `https://wa.me/91${data[currentVillage].pharmacyNumber}?text=${encodeURIComponent(prescriptionText)}`;
+}
+
+function makeCall(){
+    window.location.href = `tel:${data[currentVillage].doctorNumber}`;
+}
+
+function videoCall(){
+    window.open(`https://wa.me/91${data[currentVillage].doctorNumber}`);
+}
+
+</script>
+
+</body>
+</html>

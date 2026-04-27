@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthSeva - Smart Village Healthcare</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #020617;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --primary-accent: #00f5a0;
+            --text-main: #ffffff;
+            --text-dim: #a0aabf;
+            --border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        body {
+            background: radial-gradient(circle at top, #0a1a3a, var(--bg-color));
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* --- HOME/BACK ARROW (Top Left) --- */
+        .home-arrow {
+            position: absolute; top: 25px; left: 20px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+            color: var(--primary-accent); font-size: 20px; padding: 8px 15px;
+            border-radius: 12px; cursor: pointer; transition: 0.3s;
+            text-decoration: none; display: flex; align-items: center; justify-content: center;
+        }
+        .home-arrow:hover { 
+            background: var(--primary-accent); color: var(--bg-color); 
+            transform: scale(1.05); box-shadow: 0 0 15px rgba(0, 245, 160, 0.3);
+        }
+
+        /* --- NAVIGATION & MENU --- */
+        .menu-container { position: absolute; top: 25px; right: 20px; z-index: 1000; }
+        .menu-dots { font-size: 28px; cursor: pointer; padding: 5px 15px; color: var(--text-main); }
+        .dropdown-menu {
+            display: none; position: absolute; top: 45px; right: 0;
+            background: rgba(15, 23, 42, 0.98); border: 1px solid var(--primary-accent);
+            border-radius: 15px; width: 180px; backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .dropdown-menu.active { display: block; }
+        .menu-item { padding: 12px 20px; font-size: 14px; cursor: pointer; color: white; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .menu-item:hover { background: rgba(0, 245, 160, 0.1); color: var(--primary-accent); }
+
+        /* --- HEADER & STATUS --- */
+        .header { text-align: center; margin-top: 60px; margin-bottom: 30px; }
+        .logo-ring {
+            width: 75px; height: 75px; border-radius: 50%; border: 1px solid rgba(0, 245, 160, 0.3);
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;
+            background: radial-gradient(circle, rgba(0, 245, 160, 0.15), transparent); font-size: 35px;
+        }
+        .title { font-size: 34px; font-weight: 700; }
+        .title span { color: var(--primary-accent); }
+        .tagline { font-size: 11px; letter-spacing: 3px; opacity: 0.7; text-transform: uppercase; }
+
+        .status-container { display: flex; gap: 12px; margin-bottom: 35px; justify-content: center; }
+        .badge { background: rgba(255,255,255,0.05); padding: 8px 16px; border-radius: 25px; font-size: 12px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-color); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #00f5a0; box-shadow: 0 0 8px #00f5a0; }
+
+        /* --- GRID & CARDS --- */
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%; max-width: 850px; }
+        .card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 24px; padding: 26px; position: relative; backdrop-filter: blur(10px);
+            transition: 0.3s; display: flex; flex-direction: column; cursor: pointer;
+        }
+        .card:hover { transform: translateY(-8px); border-color: var(--primary-accent); background: rgba(255, 255, 255, 0.06); }
+
+        .icon-box { width: 50px; height: 50px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px; }
+        .bg-blue { background: rgba(37, 99, 235, 0.15); border: 1px solid #2563eb; }
+        .bg-teal { background: rgba(20, 184, 166, 0.15); border: 1px solid #14b8a6; }
+        .bg-red { background: rgba(220, 38, 38, 0.15); border: 1px solid #dc2626; }
+        .bg-orange { background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; }
+        .bg-purple { background: rgba(139, 92, 246, 0.15); border: 1px solid #8b5cf6; }
+        .bg-green { background: rgba(16, 185, 129, 0.15); border: 1px solid #10b981; }
+
+        .card h3 { font-size: 18px; margin-bottom: 8px; }
+        .card p { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+
+        @media (max-width: 650px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="home-arrow" title="Home">←</a>
+
+    <div class="menu-container">
+        <div class="menu-dots" onclick="toggleMenu()">⋮</div>
+        <div class="dropdown-menu" id="mainMenu">
+            <div class="menu-item" onclick="changeLanguage('en')">English</div>
+            <div class="menu-item" onclick="changeLanguage('te')">తెలుగు</div>
+        </div>
+    </div>
+
+    <div class="header">
+        <div class="logo-ring">⚕️</div>
+        <div class="title">Health<span>Seva</span></div>
+        <div class="tagline" id="tagline">VILLAGE • SMART • ACCESSIBLE</div>
+    </div>
+
+    <div class="status-container">
+        <div class="badge"><div class="dot"></div> <span id="status-text">System Online</span></div>
+    </div>
+
+    <div class="grid">
+        <div class="card" onclick="window.location.href='/person'">
+            <div class="icon-box bg-blue">👤</div>
+            <h3 id="c1-title">Person Details</h3>
+            <p id="c1-desc">Verify your phone via OTP and build a secure health identity</p>
+        </div>
+
+       <div class="card" onclick="window.location.href='/emergency'">
+    <div class="icon-box bg-red">🚨</div>
+    <h3 id="c3-title">Emergency</h3>
+    <p id="c3-desc">One tap SOS — ambulance dispatched with audio alert</p>
+</div>
+
+        <div class="card" onclick="checkAuth('/hospital')">
+            <div class="icon-box bg-teal">🏥</div>
+            <h3 id="c2-title">Hospitals</h3>
+            <p id="c2-desc">Find doctors, read reviews, call or book — all in one place</p>
+        </div>
+
+        <div class="card" onclick="checkAuth('/medicine')">
+            <div class="icon-box bg-orange">💊</div>
+            <h3 id="c4-title">Tablets Delivery</h3>
+            <p id="c4-desc">Upload prescription and get medicines home-delivered</p>
+        </div>
+
+        <div class="card" onclick="checkAuth('/ai')">
+            <div class="icon-box bg-purple">🎤</div>
+            <h3 id="c5-title">Early Detection</h3>
+            <p id="c5-desc">AI gives instant health insights via voice or text</p>
+        </div>
+
+        <div class="card" onclick="checkAuth('/reviews')">
+            <div class="icon-box bg-green">⭐</div>
+            <h3 id="c6-title">Reviews</h3>
+            <p id="c6-desc">Rate hospitals & doctors — build village trust</p>
+        </div>
+    </div>
+
+    <script>
+        // 🔹 Port 3000 కు సెట్ చేయబడింది
+        const API_URL = "http://localhost:3000";
+
+        const translations = {
+            en: { tagline: "VILLAGE • SMART • ACCESSIBLE", status: "System Online", c1Title: "Person Details", c1Desc: "Verify your phone via OTP and build a secure health identity", c2Title: "Hospitals", c2Desc: "Find doctors, read reviews, call or book", c3Title: "Emergency", c3Desc: "One tap SOS — ambulance alert", c4Title: "Tablets Delivery", c4Desc: "Get medicines home-delivered", c5Title: "Early Detection", c5Desc: "AI health insights via voice", c6Title: "Reviews", c6Desc: "Rate hospitals & doctors" },
+            te: { tagline: "గ్రామం • స్మార్ట్ • అందుబాటులో", status: "సిస్టమ్ ఆన్‌లైన్", c1Title: "వ్యక్తిగత వివరాలు", c1Desc: "వెరిఫికేషన్ పూర్తి చేసి హెల్త్ ఐడి పొందండి", c2Title: "హాస్పిటల్స్", c2Desc: "డాక్టర్లను కనుగొనండి, బుక్ చేసుకోండి", c3Title: "అత్యవసరం", c3Desc: "ఒక క్లిక్ తో SOS అలర్ట్ పొందండి", c4Title: "మందుల డెలివరీ", c4Desc: "మందులు ఇంటికే తెప్పించుకోండి", c5Title: "AI డిటెక్షన్", c5Desc: "AI ద్వారా ఆరోగ్య సమస్యలు తెలుసుకోండి", c6Title: "రివ్యూలు", c6Desc: "హాస్పిటల్ సేవలను రేటింగ్ చేయండి" }
+        };
+
+        function toggleMenu() { document.getElementById('mainMenu').classList.toggle('active'); }
+
+        function changeLanguage(lang) {
+            localStorage.setItem('selectedLang', lang);
+            applyLanguage(lang);
+            toggleMenu();
+        }
+
+        function applyLanguage(lang) {
+            const t = translations[lang];
+            document.getElementById('tagline').innerText = t.tagline;
+            document.getElementById('status-text').innerText = t.status;
+            ['c1','c2','c3','c4','c5','c6'].forEach(id => {
+                const titleEl = document.getElementById(`${id}-title`);
+                const descEl = document.getElementById(`${id}-desc`);
+                if(titleEl) titleEl.innerText = t[`${id}Title`];
+                if(descEl) descEl.innerText = t[`${id}Desc`];
+            });
+        }
+
+        function checkAuth(route) {
+            const verified = localStorage.getItem('isVerified');
+            const lang = localStorage.getItem('selectedLang') || 'en';
+            
+            if (verified === 'true') {
+                window.location.href = route;
+            } else {
+                const msg = lang === 'te' ? "దయచేసి ముందుగా Personal Details బాక్సులో వెరిఫికేషన్ పూర్తి చేయండి." : "Please complete your verification in Personal Details box.";
+                alert(msg);
+                window.location.href = '/person';
+            }
+        }
+
+        async function triggerEmergency() {
+            try {
+                const response = await fetch(`${API_URL}/api/send-emergency`, { // API path fixed to match common standards
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: "SOS Alert from User", location: "Live Location" })
+                });
+                const data = await response.json();
+                alert(data.message || "SOS Triggered!");
+            } catch (error) {
+                console.error("SOS Error:", error);
+                alert("అలర్ట్ పంపడంలో సమస్య ఉంది!");
+            }
+        }
+
+        window.onload = () => {
+            const lang = localStorage.getItem('selectedLang') || 'en';
+            applyLanguage(lang);
+        };
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.menu-dots')) {
+                const menu = document.getElementById('mainMenu');
+                if(menu) menu.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

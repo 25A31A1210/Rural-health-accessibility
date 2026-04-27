@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Detection</title>
+
+<style>
+body {
+    font-family: 'Inter', sans-serif;
+    background:#0f172a;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.ai-container {
+    width:370px;
+    height:600px;
+    background:white;
+    border-radius:20px;
+    display:flex;
+    flex-direction:column;
+}
+
+.chat-header {
+    padding:15px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid #eee;
+    position:relative;
+}
+
+.back-btn {
+    position:absolute;
+    left:10px;
+    top:10px;
+    font-size:22px;
+    cursor:pointer;
+    border:none;
+    background:none;
+}
+
+.chat-display {
+    flex:1;
+    padding:10px;
+    overflow:auto;
+    background:#f9fafb;
+}
+
+.bubble {
+    padding:10px;
+    margin:5px;
+    border-radius:10px;
+    max-width:75%;
+}
+
+.user { background:#10a37f; color:white; margin-left:auto; }
+.ai { background:#eee; }
+
+.input-bar {
+    display:flex;
+    padding:10px;
+}
+
+input {
+    flex:1;
+    padding:10px;
+}
+
+button {
+    margin-left:5px;
+}
+
+.hidden { display:none; }
+</style>
+</head>
+
+<body onload="init()">
+
+<div class="ai-container">
+    <div class="chat-header">
+        <button class="back-btn" onclick="goBack()">←</button>
+        <h3>AI Detection</h3>
+        <span id="status">LOCKED</span>
+    </div>
+
+    <div class="chat-display" id="chat"></div>
+
+    <div class="input-bar hidden" id="inputBar">
+        <input id="input" placeholder="Type symptoms...">
+        <button onclick="mic()">🎤</button>
+        <button onclick="send()">➤</button>
+    </div>
+</div>
+
+<script>
+let verified = false;
+
+function init() {
+    let status = localStorage.getItem("isVerified");
+    if (status === "true") {
+        verified = true;
+        document.getElementById("status").innerText = "VERIFIED";
+        document.getElementById("inputBar").classList.remove("hidden");
+        addAI("Hello! Tell me your symptoms / మీ లక్షణాలను చెప్పండి.");
+    } else {
+        verified = false;
+        document.getElementById("status").innerText = "LOCKED";
+        document.getElementById("inputBar").classList.add("hidden");
+    }
+}
+
+function goBack() {
+    window.location.href = "server.html";
+}
+
+function send() {
+    if (!verified) {
+        alert("Please verify first");
+        return;
+    }
+    let val = document.getElementById("input").value.trim();
+    if (!val) return;
+    addUser(val);
+    document.getElementById("input").value = "";
+    process(val);
+}
+
+// 🔥 Mic Function Updated for 100% Telugu Recognition
+function mic() {
+    if (!verified) {
+        alert("Please verify first");
+        return;
+    }
+    let rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    
+    // We use "te-IN" first to force Telugu script detection. 
+    // If user speaks English, modern browsers still detect it fairly well.
+    rec.lang = "te-IN"; 
+    rec.continuous = false;
+    rec.interimResults = false;
+
+    rec.onresult = (e) => {
+        let text = e.results[0][0].transcript;
+        addUser(text);
+        process(text);
+    };
+
+    rec.onerror = (e) => {
+        console.error("Speech Recognition Error: ", e.error);
+        // If Telugu fails or no speech, we can fallback to en-IN if needed
+    };
+
+    rec.start();
+}
+
+function process(text) {
+    let t = text.toLowerCase();
+    let reply = "";
+    
+    // Improved Detection: Script check + Tanglish keywords
+    let isTeluguScript = /[ఀ-౿]/.test(text);
+    let hasTeluguKeywords = t.includes("naaku") || t.includes("manta") || t.includes("jvaram") || t.includes("daggu");
+    let isTelugu = isTeluguScript || hasTeluguKeywords;
+
+    if ((t.includes("temperature") || t.includes("fever") || t.includes("జ్వరం") || t.includes("jvaram"))) {
+        reply = isTelugu ? "మీకు జ్వరం ఉన్నట్లు అనిపిస్తోంది. విశ్రాంతి తీసుకోండి." : "It sounds like you have a fever. Please take rest.";
+    }
+    else if ((t.includes("sore throat") || t.includes("గొంతు") || t.includes("sneezing") || t.includes("తుమ్ములు") || t.includes("tummulu"))) {
+        reply = isTelugu ? "మీకు జలుబు చేసినట్లు ఉంది." : "It looks like a cold is developing.";
+    }
+    else if ((t.includes("irritation") || t.includes("మంట") || t.includes("cough") || t.includes("దగ్గు") || t.includes("daggu"))) {
+        reply = isTelugu ? "మీకు దగ్గు వచ్చే అవకాశం ఉంది." : "You may develop a cough.";
+    }
+    else {
+        reply = isTelugu ? "దయచేసి మీ లక్షణాలను స్పష్టంగా వివరించండి." : "Please describe your symptoms clearly.";
+    }
+
+    setTimeout(() => {
+        addAI(reply);
+        speak(reply, isTelugu);
+    }, 400);
+}
+
+// AI Voice Output Function
+function speak(msg, isTelugu) {
+    let synth = window.speechSynthesis;
+    let utter = new SpeechSynthesisUtterance(msg);
+    // Auto-detect voice language
+    utter.lang = isTelugu ? "te-IN" : "en-US";
+    synth.speak(utter);
+}
+
+function addUser(msg) {
+    let d = document.createElement("div");
+    d.className = "bubble user";
+    d.innerText = msg;
+    let chat = document.getElementById("chat");
+    chat.appendChild(d);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function addAI(msg) {
+    let d = document.createElement("div");
+    d.className = "bubble ai";
+    d.innerText = msg;
+    let chat = document.getElementById("chat");
+    chat.appendChild(d);
+    chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+</html>

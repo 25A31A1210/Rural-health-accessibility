@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital Review</title>
+
+<style>
+body { 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    display:flex; 
+    justify-content:center; 
+    align-items:center; 
+    height:100vh; 
+    background:#0f172a; 
+    margin: 0;
+}
+
+.review-card {
+    width:350px;
+    height:500px;
+    background:white;
+    border-radius:20px;
+    padding:20px;
+    text-align:center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+}
+
+.back-arrow { 
+    text-align: left;
+    font-size:25px; 
+    cursor:pointer; 
+    color: #4b5563;
+    display: inline-block;
+    width: 100%;
+}
+
+/* Star Rating System Styling */
+.star-container {
+    margin: 30px 0;
+    display: flex;
+    flex-direction: row-reverse; 
+    justify-content: center;
+}
+
+.star-container input {
+    display: none;
+}
+
+.star-container label {
+    font-size: 45px;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s ease-in-out;
+}
+
+/* Hover and Checked states logic */
+.star-container label:hover,
+.star-container label:hover ~ label,
+.star-container input:checked ~ label {
+    color: #fbbf24; /* Gold color */
+}
+
+.submit-btn { 
+    margin-top:20px; 
+    padding:12px 30px; 
+    cursor:pointer;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.submit-btn:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+#successMsg {
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 18px;
+}
+</style>
+</head>
+
+<body onload="initPage()">
+
+<div class="review-card">
+
+    <div class="back-arrow" onclick="goBack()">←</div>
+
+    <h3 id="hospitalName" style="margin-top: 10px;">Hospital</h3>
+
+    <p id="question" style="font-weight: 500; padding: 0 10px; line-height: 1.4;">
+        What is your experience about the hospital where you received the service?
+    </p>
+
+    <p id="statusText" style="color:red; font-size: 14px;">Please verify first</p>
+
+    <div class="star-container" id="starRatingBox" onclick="checkLockAlert()">
+        <input type="radio" id="star5" name="rating" value="5" disabled><label for="star5">★</label>
+        <input type="radio" id="star4" name="rating" value="4" disabled><label for="star4">★</label>
+        <input type="radio" id="star3" name="rating" value="3" disabled><label for="star3">★</label>
+        <input type="radio" id="star2" name="rating" value="2" disabled><label for="star2">★</label>
+        <input type="radio" id="star1" name="rating" value="1" disabled><label for="star1">★</label>
+    </div>
+
+    <div id="successMsg" style="display:none; color:green;">✔ Submitted!</div>
+
+    <button id="submitBtn" class="submit-btn" onclick="submitReview()" disabled>Submit</button>
+
+</div>
+
+<script>
+let verified = false;
+
+const translations = {
+    en: {
+        question: "What is your experience about the hospital where you received the service?",
+        locked: "Please verify first",
+        unlocked: "You can give rating now",
+        submitted: "✔ Submitted!"
+    },
+    te: {
+        question: "మీరు సేవ పొందిన ఆసుపత్రి గురించి మీ అనుభవం ఏమిటి?",
+        locked: "ముందుగా verify చేయండి",
+        unlocked: "మీరు రేటింగ్ ఇవ్వవచ్చు",
+        submitted: "✔ సమర్పించబడింది!"
+    }
+};
+
+function initPage(){
+    applyLanguage();
+    const isVerified = localStorage.getItem("isVerified");
+    if(isVerified === "true"){
+        unlockReview();
+    }
+    const selectedHospital = localStorage.getItem("selectedHospital");
+    if(selectedHospital){
+        document.getElementById("hospitalName").innerText = selectedHospital;
+    }
+}
+
+function applyLanguage(){
+    const lang = localStorage.getItem("selectedLang") || "en";
+    const t = translations[lang];
+    document.getElementById("question").innerText = t.question;
+    document.getElementById("statusText").innerText = t.locked;
+}
+
+function unlockReview(){
+    verified = true;
+    const inputs = document.querySelectorAll('.star-container input');
+    inputs.forEach(i => i.disabled = false);
+    document.getElementById("submitBtn").disabled = false;
+    const lang = localStorage.getItem("selectedLang") || "en";
+    document.getElementById("statusText").innerText = translations[lang].unlocked;
+    document.getElementById("statusText").style.color = "green";
+}
+
+function checkLockAlert(){
+    if(!verified){
+        const lang = localStorage.getItem("selectedLang") || "en";
+        alert(translations[lang].locked);
+    }
+}
+
+function submitReview(){
+    const rating = document.querySelector('input[name="rating"]:checked');
+    if(!rating){
+        alert("Select stars first!");
+        return;
+    }
+    document.getElementById("submitBtn").style.display = "none";
+    document.getElementById("successMsg").style.display = "block";
+    const lang = localStorage.getItem("selectedLang") || "en";
+    document.getElementById("successMsg").innerText = translations[lang].submitted;
+}
+
+// BACK BUTTON LOGIC FIXED
+function goBack(){
+    window.location.href = "server.html";
+}
+</script>
+
+</body>
+</html>

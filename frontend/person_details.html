@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthSeva - Registration</title>
+    <style>
+        body { 
+            background: #020617; 
+            color: white; 
+            font-family: 'Poppins', sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .container { 
+            border: 1px solid #2563eb; 
+            padding: 30px; 
+            border-radius: 20px; 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(10px);
+            text-align: center; 
+            width: 380px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .back-arrow {
+            position: absolute; top: 20px; left: 20px;
+            background: none; border: none; color: #60a5fa;
+            font-size: 24px; cursor: pointer;
+            transition: 0.3s;
+        }
+        .back-arrow:hover { color: white; transform: scale(1.1); }
+
+        input { 
+            width: 100%; padding: 14px; margin: 12px 0; 
+            border-radius: 10px; border: 1px solid #334155; 
+            background: #0f172a; color: white; outline: none;
+            text-align: center; font-size: 16px;
+        }
+        input:focus { border-color: #2563eb; box-shadow: 0 0 10px rgba(37, 99, 235, 0.2); }
+        
+        .submit-btn {
+            background: #2563eb; color: white; border: none;
+            padding: 14px; border-radius: 10px; cursor: pointer;
+            width: 100%; font-weight: bold; font-size: 16px; margin-top: 10px;
+        }
+        .timer-text { font-size: 13px; color: #94a3b8; margin-top: 10px; }
+        .resend-btn { 
+            color: #2563eb; cursor: pointer; font-weight: 600; 
+            display: none; text-decoration: underline;
+        }
+        .hidden { display: none; }
+        .error { color: #f87171; font-size: 14px; margin-top: 8px; }
+    </style>
+</head>
+<body>
+
+    <div id="step1" class="container">
+        <button class="back-arrow" onclick="goHome()">←</button>
+        <h1>👤 Details</h1>
+        <p>Enter your phone number</p>
+        <input type="tel" id="phoneInput" placeholder="Phone Number" maxlength="10">
+        <button class="submit-btn" onclick="sendOTPRequest()">Get OTP</button>
+    </div>
+
+    <div id="step2" class="container hidden">
+        <button class="back-arrow" onclick="goBack(1)">←</button>
+        <h1>🔐 Verification</h1>
+        <p>Enter the OTP sent to your mobile</p>
+        <input type="text" id="otpInput" placeholder="Enter OTP" maxlength="4">
+        <div id="otpError" class="error hidden">Wrong OTP! Please try again.</div>
+        
+        <div class="timer-text">
+            Code expires in: <span id="timer">00:30</span>
+        </div>
+        <div id="resendContainer" class="timer-text">
+            Didn’t receive the code? <span class="resend-btn" id="resendBtn" onclick="sendOTPRequest()">Resend OTP</span>
+        </div>
+
+        <button class="submit-btn" onclick="verifyOTPCode()">Verify & Continue</button>
+    </div>
+
+    <div id="step3" class="container hidden">
+        <button class="back-arrow" onclick="goBack(2)">←</button>
+        <h1>📝 Complete Details</h1>
+        <input type="text" id="userName" placeholder="Your Name">
+        <input type="number" id="userAge" placeholder="Your Age">
+        <input type="text" id="userVillage" placeholder="Village Name">
+        <button class="submit-btn" onclick="finalSubmit()">Complete Registration</button>
+    </div>
+
+    <script>
+        let timeLeft = 30;
+        let timerId;
+        const API_URL = "http://localhost:3000/api"; 
+
+        function goHome() { window.location.href = "server.html"; }
+
+        function startTimer() {
+            timeLeft = 30;
+            document.getElementById('resendBtn').style.display = 'none';
+            document.getElementById('timer').parentElement.style.display = 'block';
+            clearInterval(timerId);
+            timerId = setInterval(() => {
+                if(timeLeft <= 0) {
+                    clearInterval(timerId);
+                    document.getElementById('timer').parentElement.style.display = 'none';
+                    document.getElementById('resendBtn').style.display = 'inline';
+                } else {
+                    document.getElementById('timer').innerText = `00:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+                }
+                timeLeft -= 1;
+            }, 1000);
+        }
+
+        async function sendOTPRequest() {
+            const phone = document.getElementById('phoneInput').value;
+            if(phone !== "6303317734") {
+                alert("Sorry, OTP will be sent only to the registered number.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/send-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ number: phone })
+                });
+
+                if(response.ok) {
+                    document.getElementById('step1').classList.add('hidden');
+                    document.getElementById('step2').classList.remove('hidden');
+                    startTimer();
+                } else {
+                    alert("Failed to send OTP.");
+                }
+            } catch (err) {
+                alert("Server not connected. (Check if port 3000 is running)");
+            }
+        }
+
+        async function verifyOTPCode() {
+            const otp = document.getElementById('otpInput').value;
+            const phone = document.getElementById('phoneInput').value;
+
+            try {
+                const response = await fetch(`${API_URL}/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ number: phone, otp: otp })
+                });
+
+                if(response.ok) {
+                    document.getElementById('step2').classList.add('hidden');
+                    document.getElementById('step3').classList.remove('hidden');
+                } else {
+                    document.getElementById('otpError').classList.remove('hidden');
+                }
+            } catch (err) {
+                alert("Verification failed.");
+            }
+        }
+
+        function finalSubmit() {
+            const details = {
+                name: document.getElementById('userName').value,
+                age: document.getElementById('userAge').value,
+                village: document.getElementById('userVillage').value,
+                phone: document.getElementById('phoneInput').value
+            };
+            if(!details.name || !details.age || !details.village) {
+                alert("Please fill all details.");
+                return;
+            }
+            localStorage.setItem('isVerified', 'true');
+            localStorage.setItem('userData', JSON.stringify(details));
+            alert("Thank you! Your details have been saved.");
+            window.location.href = "server.html"; 
+        }
+
+        function goBack(step) {
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step' + step).classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

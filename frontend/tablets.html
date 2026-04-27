@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tablet Identity System</title>
+
+<style>
+/* SAME OLD UI - NO CHANGE */
+body { 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    min-height: 100vh; 
+    background-color: #d1d5db; 
+    margin: 0; 
+}
+.container-box { 
+    width: 360px; 
+    height: 580px;
+    background: white; 
+    border-radius: 25px; 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2); 
+    padding: 20px; 
+    text-align: center; 
+    position: relative; 
+    overflow: hidden; 
+}
+.page { display: none; flex-direction: column; height: 100%; position: relative; }
+.active { display: flex; }
+.back-btn { position: absolute; top: 0; left: 0; background: none; border: none; font-size: 28px; cursor: pointer; color: #4b5563; padding: 10px; z-index: 10; }
+.next-btn { position: absolute; bottom: 15px; right: 15px; background: #10b981; color: white; border: none; border-radius: 50%; width: 55px; height: 55px; cursor: pointer; font-size: 24px; display: flex; justify-content: center; align-items: center; }
+.input-field { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; }
+.photo-square { width: 170px; height: 170px; border: 3px dashed #3b82f6; margin: 50px auto 20px; border-radius: 15px; display: flex; justify-content: center; align-items: center; cursor: pointer; background: #eff6ff; overflow: hidden; }
+.photo-square img { width: 100%; height: 100%; object-fit: cover; }
+.upload-final-button { background: #3b82f6; color: white; border: none; padding: 12px 30px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+.med-box { text-align: left; background: #f9fafb; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 4px solid #3b82f6; }
+.med-name { font-weight: bold; color: #1f2937; }
+.receipt { background: #fffbeb; border: 1px solid #fef3c7; padding: 20px; border-radius: 15px; margin-top: 40px; text-align: left; }
+</style>
+</head>
+
+<body>
+
+<div id="tablet-card" class="container-box">
+
+    <!-- PAGE 0 -->
+    <div id="page0" class="page active">
+        <button class="back-btn" onclick="goToSecondInterface()">←</button>
+        <div style="margin-top: 80px;">
+            <h2>Tablet Identity</h2>
+            <p>All features unlocked</p>
+            <button class="upload-final-button" onclick="navTo(1)">
+                Open Tablet Features
+            </button>
+        </div>
+    </div>
+
+    <!-- PAGE 1 -->
+    <div id="page1" class="page">
+        <button class="back-btn" onclick="navTo(0)">←</button>
+        <h3 style="margin-top: 50px;">Upload Prescription</h3>
+        <div class="photo-square" onclick="document.getElementById('imgInp').click()">
+            <img id="preview" src="https://via.placeholder.com/150?text=Select+Receipt">
+        </div>
+        <input type="file" id="imgInp" hidden accept="image/*" onchange="previewFile(event)">
+        <button id="arrowNext" class="next-btn" style="display:none;" onclick="showUploadBtn()">➔</button>
+        <button id="uploadBtn" class="upload-final-button" style="display:none;" onclick="goToMeds()">Upload Photo</button>
+    </div>
+
+    <!-- PAGE 2 -->
+    <div id="page2" class="page">
+        <button class="back-btn" onclick="navTo(1)">←</button>
+        <h3 style="margin-top: 50px;">Medicine Schedule</h3>
+        <div id="medList"></div>
+        <button class="next-btn" onclick="navTo(3)">➔</button>
+    </div>
+
+    <!-- PAGE 3 -->
+    <div id="page3" class="page">
+        <button class="back-btn" onclick="navTo(2)">←</button>
+        <h3 style="margin-top: 50px;">Delivery Info</h3>
+        <input type="tel" placeholder="Mobile Number" class="input-field">
+        <textarea placeholder="Full Address" rows="4" class="input-field"></textarea>
+        <button class="next-btn" onclick="navTo(4)">SUBMIT</button>
+    </div>
+
+    <!-- PAGE 4 -->
+    <div id="page4" class="page">
+        <button class="back-btn" onclick="navTo(3)">←</button>
+        <h3 style="margin-top: 50px;">Order Summary</h3>
+        <div class="receipt">
+            <p><strong>Delivery Date:</strong> 24 April 2026</p>
+            <p><strong>Total Cost:</strong> ₹520.00</p>
+            <p style="color: #059669; font-weight: bold;">✔ Order Received</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+let selectedReceipt = "other";
+
+/* 🔥 Medicine database */
+const medicineData = {
+    child: [
+        "Paracetamol Syrup (60ml)",
+        "ORS Packets (5)",
+        "Vaccination Charge (1 Dose)"
+    ],
+    mother: [
+        "Folic Acid Tablet",
+        "Iron Tablet",
+        "Calcium Tablet"
+    ],
+    sair: [
+        "Paracetamol",
+        "Cetirizine",
+        "Cough Syrup"
+    ],
+    other: [
+        "General Tablet 1",
+        "General Tablet 2",
+        "General Tablet 3"
+    ]
+};
+
+function goToSecondInterface(){
+    window.location.href = "server.html";
+}
+
+function navTo(pageNum){
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page' + pageNum).classList.add('active');
+}
+
+/* 🔥 SMART detection */
+function previewFile(event){
+    const file = event.target.files[0];
+    const name = file.name.toLowerCase();
+
+    // file name detection
+    if(name.includes("child")) selectedReceipt = "child";
+    else if(name.includes("mother")) selectedReceipt = "mother";
+    else if(name.includes("sair") || name.includes("sri")) selectedReceipt = "sair";
+
+    const reader = new FileReader();
+    reader.onload = function(){
+        document.getElementById('preview').src = reader.result;
+        document.getElementById('arrowNext').style.display = 'flex';
+    }
+    reader.readAsDataURL(file);
+}
+
+function showUploadBtn(){
+    document.getElementById('arrowNext').style.display = 'none';
+    document.getElementById('uploadBtn').style.display = 'block';
+}
+
+function goToMeds(){
+    alert("Photo Uploaded Successfully!");
+
+    const medList = document.getElementById('medList');
+    medList.innerHTML = "";
+
+    medicineData[selectedReceipt].forEach(med => {
+        medList.innerHTML += `<div class="med-box"><div class="med-name">${med}</div></div>`;
+    });
+
+    navTo(2);
+}
+
+</script>
+
+</body>
+</html>
